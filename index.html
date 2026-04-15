@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>X CREATEUR DE PERSONNAGE</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      padding: 30px 0;
+      border-bottom: 2px solid #0f3460;
+      margin-bottom: 30px;
+    }
+    h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(90deg, #e94560, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .login-section, .app-section {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+    }
+    .hidden { display: none; }
+    
+    /* Formulaire de login */
+    .form-group {
+      margin: 15px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #0f3460;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      font-size: 1rem;
+    }
+    input:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+    button {
+      background: linear-gradient(90deg, #e94560, #ff6b6b);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+      width: 100%;
+      margin-top: 10px;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(233,69,96,0.4);
+    }
+    
+    /* Zone d'upload */
+    .upload-zone {
+      border: 3px dashed #0f3460;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      margin: 20px 0;
+      cursor: pointer;
+      transition: border-color 0.3s;
+    }
+    .upload-zone:hover {
+      border-color: #e94560;
+    }
+    .upload-zone.dragover {
+      background: rgba(233,69,96,0.1);
+      border-color: #e94560;
+    }
+    
+    /* Grille de résultats */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+    .result-card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+    }
+    .result-card img {
+      width: 100%;
+      border-radius: 8px;
+      margin: 10px 0;
+      max-height: 200px;
+      object-fit: contain;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #ff6b6b;
+    }
+    
+    /* Options de génération */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .option-card {
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+    .option-card.selected {
+      border-color: #e94560;
+      background: rgba(233,69,96,0.1);
+    }
+    
+    .error {
+      color: #ff6b6b;
+      background: rgba(255,107,107,0.1);
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎬 X CREATEUR DE PERSONNAGE</h1>
+      <p>Plateforme professionnelle pour productions d'animation (APROCA)</p>
+    </header>
+
+    <!-- Section Login -->
+    <div id="loginSection" class="login-section">
+      <h2>🔐 Accès réservé</h2>
+      <div class="form-group">
+        <label for="userId">Identifiant collaborateur</label>
+        <input type="text" id="userId" placeholder="Ex: prod_user_001" />
+      </div>
+      <div class="form-group">
+        <label for="userPass">Mot de passe</label>
+        <input type="password" id="userPass" placeholder="••••••••" />
+      </div>
+      <button onclick="handleLogin()">Se connecter</button>
+      <p id="loginError" class="error hidden"></p>
+    </div>
+
+    <!-- Section Application (cachée avant login) -->
+    <div id="appSection" class="app-section hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h2>✨ Créer un personnage</h2>
+        <button onclick="handleLogout()" style="width:auto;padding:8px 16px;font-size:0.9rem;">Déconnexion</button>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="dropZone">
+        <p>📤 Glissez-déposez votre esquisse ici</p>
+        <p style="font-size:0.9rem;color:#aaa;">ou cliquez pour parcourir</p>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+      </div>
+      <div id="previewContainer" class="hidden">
+        <p>✅ Esquisse chargée :</p>
+        <img id="sketchPreview" style="max-width:300px;border-radius:8px;margin:10px 0;" />
+      </div>
+
+      <!-- Options de génération -->
+      <h3 style="margin:25px 0 15px;">⚙️ Options de génération</h3>
+      <div class="options-grid">
+        <div class="option-card selected" data-type="turnaround">
+          <strong>🔄 Turnaround</strong><br/>
+          <small>Vues face/profil/dos</small>
+        </div>
+        <div class="option-card" data-type="poses">
+          <strong>🎭 Poses</strong><br/>
+          <small>Bibliothèque d'attitudes</small>
+        </div>
+        <div class="option-card" data-type="lipsync">
+          <strong>👄 Lip-sync</strong><br/>
+          <small>Positions de lèvres</small>
+        </div>
+        <div class="option-card" data-type="expressions">
+          <strong>😊 Expressions</strong><br/>
+          <small>Émotions variées</small>
+        </div>
+      </div>
+
+      <button id="generateBtn" onclick="generateCharacter()" disabled>
+        🎨 Générer le personnage
+      </button>
+
+      <!-- Résultats -->
+      <div id="loading" class="loading hidden">
+        <p>⏳ Génération en cours... (30-60 secondes)</p>
+        <div style="width:200px;height:4px;background:#333;border-radius:2px;margin:15px auto;overflow:hidden;">
+          <div id="progressBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#ff6b6b);transition:width 0.3s;"></div>
+        </div>
+      </div>
+
+      <div id="results" class="results-grid hidden"></div>
+    </div>
+  </div>
+
+  <script>
+    // === CONFIGURATION (À PERSONNALISER) ===
+    const CONFIG = {
+      // Pour la démo : identifiants de test
+      validUsers: {
+        'prod_user_001': 'anim2026',
+        'collab_artist': 'sketch99',
+        'admin_prod': 'master123'
+      },
+      // Clé API Replicate (à remplacer par la vôtre : https://replicate.com)
+      replicateApiKey: 'r8_YOUR_API_KEY_HERE',
+      // Modèle Stable Diffusion avec ControlNet pour sketch-to-image
+      modelEndpoint: 'https://api.replicate.com/v1/predictions'
+    };
+
+    // === GESTION DE L'AUTHENTIFICATION ===
+    let currentUser = null;
+
+    function handleLogin() {
+      const userId = document.getElementById('userId').value.trim();
+      const userPass = document.getElementById('userPass').value;
+      const errorMsg = document.getElementById('loginError');
+
+      if (CONFIG.validUsers[userId] === userPass) {
+        currentUser = userId;
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('appSection').classList.remove('hidden');
+        errorMsg.classList.add('hidden');
+        // Sauvegarder la session
+        sessionStorage.setItem('xcreator_user', userId);
+      } else {
+        errorMsg.textContent = '❌ Identifiants incorrects. Contactez votre administrateur.';
+        errorMsg.classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      sessionStorage.removeItem('xcreator_user');
+      document.getElementById('appSection').classList.add('hidden');
+      document.getElementById('loginSection').classList.remove('hidden');
+      document.getElementById('userId').value = '';
+      document.getElementById('userPass').value = '';
+    }
+
+    // Vérifier session au chargement
+    window.addEventListener('load', () => {
+      const savedUser = sessionStorage.getItem('xcreator_user');
+      if (savedUser && CONFIG.validUsers[savedUser]) {
+        currentUser = savedUser;
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('appSection').classList.remove('hidden');
+      }
+    });
+
+    // === GESTION DE L'UPLOAD ===
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const sketchPreview = document.getElementById('sketchPreview');
+    const generateBtn = document.getElementById('generateBtn');
+    let uploadedImage = null;
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      handleFile(e.dataTransfer.files[0]);
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+      handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        alert('Veuillez sélectionner une image valide (PNG, JPG, WebP)');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        uploadedImage = e.target.result;
+        sketchPreview.src = uploadedImage;
+        previewContainer.classList.remove('hidden');
+        generateBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // === OPTIONS DE GÉNÉRATION ===
+    let selectedType = 'turnaround';
+    document.querySelectorAll('.option-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedType = card.dataset.type;
+      });
+    });
+
+    // === GÉNÉRATION DU PERSONNAGE ===
+    async function generateCharacter() {
+      if (!uploadedImage) {
+        alert('Veuillez d\'abord charger une esquisse');
+        return;
+      }
+
+      const loading = document.getElementById('loading');
+      const results = document.getElementById('results');
+      const progressBar = document.getElementById('progressBar');
+      
+      loading.classList.remove('hidden');
+      results.classList.add('hidden');
+      results.innerHTML = '';
+      generateBtn.disabled = true;
+
+      // Simulation de progression
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        progressBar.style.width = `${progress}%`;
+      }, 500);
+
+      try {
+        // === APPEL À L'API IA (Exemple avec Replicate) ===
+        // Pour utiliser en production, remplacez cette section par un appel réel à votre backend
+        
+        // En attendant, simulation de résultats pour la démo :
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Résultats simulés (à remplacer par les vraies images générées)
+        const mockResults = {
+          turnaround: [
+            { label: 'Face', url: 'https://via.placeholder.com/250x300/1a1a2e/e94560?text=Face+View' },
+            { label: 'Profil', url: 'https://via.placeholder.com/250x300/1a1a2e/e94560?text=Profile+View' },
+            { label: 'Dos', url: 'https://via.placeholder.com/250x300/1a1a2e/e94560?text=Back+View' }
+          ],
+          poses: [
+            { label: 'Pose dynamique', url: 'https://via.placeholder.com/250x300/1a1a2e/ff6b6b?text=Dynamic+Pose' },
+            { label: 'Pose assise', url: 'https://via.placeholder.com/250x300/1a1a2e/ff6b6b?text=Sitting+Pose' },
+            { label: 'Action', url: 'https://via.placeholder.com/250x300/1a1a2e/ff6b6b?text=Action+Pose' }
+          ],
+          lipsync: [
+            { label: 'Phonème A', url: 'https://via.placeholder.com/250x300/1a1a2e/4ecdc4?text=Mouth+A' },
+            { label: 'Phonème O', url: 'https://via.placeholder.com/250x300/1a1a2e/4ecdc4?text=Mouth+O' },
+            { label: 'Phonème M', url: 'https://via.placeholder.com/250x300/1a1a2e/4ecdc4?text=Mouth+M' }
+          ],
+          expressions: [
+            { label: 'Joyeux', url: 'https://via.placeholder.com/250x300/1a1a2e/ffe66d?text=Happy' },
+            { label: 'Surpris', url: 'https://via.placeholder.com/250x300/1a1a2e/ffe66d?text=Surprised' },
+            { label: 'Colère', url: 'https://via.placeholder.com/250x300/1a1a2e/ffe66d?text=Angry' }
+          ]
+        };
+
+        const resultsToDisplay = mockResults[selectedType] || mockResults.turnaround;
+        
+        resultsToDisplay.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'result-card';
+          card.innerHTML = `
+            <strong>${item.label}</strong>
+            <img src="${item.url}" alt="${item.label}" />
+            <button onclick="downloadImage('${item.url}', '${item.label}.png')" 
+                    style="margin-top:10px;padding:8px;font-size:0.85rem;">
+              ⬇️ Télécharger
+            </button>
+          `;
+          results.appendChild(card);
+        });
+
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+        
+        setTimeout(() => {
+          loading.classList.add('hidden');
+          results.classList.remove('hidden');
+          generateBtn.disabled = false;
+        }, 500);
+
+      } catch (error) {
+        console.error('Erreur de génération:', error);
+        clearInterval(progressInterval);
+        loading.classList.add('hidden');
+        alert('❌ Erreur lors de la génération. Veuillez réessayer.');
+        generateBtn.disabled = false;
+      }
+    }
+
+    function downloadImage(url, filename) {
+      // Fonction simplifiée - en production, utilisez un backend pour éviter les CORS
+      fetch(url)
+        .then(res => res.blob())
+        .then(blob => {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = filename;
+          link.click();
+        })
+        .catch(() => {
+          // Fallback : ouvrir dans un nouvel onglet
+          window.open(url, '_blank');
+        });
+    }
+  </script>
+</body>
+</html>
