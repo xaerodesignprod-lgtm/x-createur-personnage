@@ -341,11 +341,88 @@
     });
 
     // === GÉNÉRATION DU PERSONNAGE ===
-    async function generateCharacter() {
-      if (!uploadedImage) {
-        alert('Veuillez d\'abord charger une esquisse');
-        return;
-      }
+   async function generateCharacter() {
+  if (!uploadedImage) {
+    alert('Veuillez d\'abord charger une esquisse');
+    return;
+  }
+
+  const loading = document.getElementById('loading');
+  const results = document.getElementById('results');
+  const progressBar = document.getElementById('progressBar');
+  
+  loading.classList.remove('hidden');
+  results.classList.add('hidden');
+  results.innerHTML = '';
+  generateBtn.disabled = true;
+  generateBtn.textContent = '⏳ Génération IA en cours...';
+
+  let progress = 0;
+  const progressInterval = setInterval(() => {
+    progress += Math.random() * 8;
+    if (progress > 85) progress = 85;
+    progressBar.style.width = `${progress}%`;
+  }, 1500);
+
+  try {
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sketch: uploadedImage,
+        type: selectedType,
+        userId: currentUser
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.error || 'Erreur serveur');
+
+    clearInterval(progressInterval);
+    progressBar.style.width = '100%';
+
+    if (data.urls && data.urls.length > 0) {
+      data.urls.forEach((url, index) => {
+        const labels = {
+          turnaround: ['Face', 'Profil', 'Dos', '3/4'],
+          poses: ['Pose Dynamique', 'Pose Assise', 'Action', 'Marche'],
+          lipsync: ['Phonème A', 'Phonème E', 'Phonème O', 'Phonème M'],
+          expressions: ['Joyeux', 'Triste', 'Colère', 'Surpris']
+        };
+        const labelList = labels[selectedType] || ['Génération ' + (index + 1)];
+        
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        card.innerHTML = `
+          <strong>${labelList[index % labelList.length]}</strong>
+          <img src="${url}" alt="Résultat IA" />
+          <button onclick="downloadImage('${url}', 'perso_${index}.png')" 
+                  style="margin-top:10px;padding:8px;font-size:0.85rem;background:#0f3460;">
+            ⬇️ Télécharger
+          </button>
+        `;
+        results.appendChild(card);
+      });
+
+      setTimeout(() => {
+        loading.classList.add('hidden');
+        results.classList.remove('hidden');
+        generateBtn.disabled = false;
+        generateBtn.textContent = '🎨 Générer le personnage';
+      }, 600);
+    } else {
+      throw new Error('Aucune image retournée par l\'IA');
+    }
+
+  } catch (error) {
+    clearInterval(progressInterval);
+    loading.classList.add('hidden');
+    alert('❌ ' + error.message + '\n\nVérifiez que : 1) La clé API est dans Vercel 2) Le fichier api/generate.js existe');
+    generateBtn.disabled = false;
+    generateBtn.textContent = '🎨 Générer le personnage';
+  }
+}
 
       const loading = document.getElementById('loading');
       const results = document.getElementById('results');
