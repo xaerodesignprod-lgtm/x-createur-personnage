@@ -13,10 +13,7 @@
       min-height: 100vh;
       padding: 20px;
     }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+    .container { max-width: 1200px; margin: 0 auto; }
     header {
       text-align: center;
       padding: 30px 0;
@@ -38,17 +35,9 @@
       backdrop-filter: blur(10px);
     }
     .hidden { display: none; }
-    
-    /* Formulaire de login */
-    .form-group {
-      margin: 15px 0;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
-    input, select {
+    .form-group { margin: 15px 0; }
+    label { display: block; margin-bottom: 8px; font-weight: 500; }
+    input {
       width: 100%;
       padding: 12px;
       border: 2px solid #0f3460;
@@ -57,10 +46,7 @@
       color: #fff;
       font-size: 1rem;
     }
-    input:focus {
-      outline: none;
-      border-color: #e94560;
-    }
+    input:focus { outline: none; border-color: #e94560; }
     button {
       background: linear-gradient(90deg, #e94560, #ff6b6b);
       color: white;
@@ -74,12 +60,7 @@
       width: 100%;
       margin-top: 10px;
     }
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(233,69,96,0.4);
-    }
-    
-    /* Zone d'upload */
+    button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(233,69,96,0.4); }
     .upload-zone {
       border: 3px dashed #0f3460;
       border-radius: 12px;
@@ -89,15 +70,7 @@
       cursor: pointer;
       transition: border-color 0.3s;
     }
-    .upload-zone:hover {
-      border-color: #e94560;
-    }
-    .upload-zone.dragover {
-      background: rgba(233,69,96,0.1);
-      border-color: #e94560;
-    }
-    
-    /* Grille de résultats */
+    .upload-zone:hover, .upload-zone.dragover { border-color: #e94560; background: rgba(233,69,96,0.1); }
     .results-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -117,13 +90,7 @@
       max-height: 200px;
       object-fit: contain;
     }
-    .loading {
-      text-align: center;
-      padding: 20px;
-      color: #ff6b6b;
-    }
-    
-    /* Options de génération */
+    .loading { text-align: center; padding: 20px; color: #ff6b6b; }
     .options-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -138,11 +105,7 @@
       border: 2px solid transparent;
       transition: all 0.3s;
     }
-    .option-card.selected {
-      border-color: #e94560;
-      background: rgba(233,69,96,0.1);
-    }
-    
+    .option-card.selected { border-color: #e94560; background: rgba(233,69,96,0.1); }
     .error {
       color: #ff6b6b;
       background: rgba(255,107,107,0.1);
@@ -156,35 +119,33 @@
   <div class="container">
     <header>
       <h1>🎬 X CREATEUR DE PERSONNAGE</h1>
-      <p>Plateforme professionnelle pour productions d'animation (APROCA)</p>
+      <p>Plateforme professionnelle pour productions d'animation</p>
     </header>
 
-    <!-- Section Login -->
+    <!-- LOGIN -->
     <div id="loginSection" class="login-section">
       <h2>🔐 Accès réservé</h2>
       <div class="form-group">
-        <label for="userId">Identifiant collaborateur</label>
-        <input type="text" id="userId" placeholder="Ex: prod_user_001" />
+        <label>Identifiant</label>
+        <input type="text" id="userId" placeholder="Ex: admin" />
       </div>
       <div class="form-group">
-        <label for="userPass">Mot de passe</label>
+        <label>Mot de passe</label>
         <input type="password" id="userPass" placeholder="••••••••" />
       </div>
       <button onclick="handleLogin()">Se connecter</button>
       <p id="loginError" class="error hidden"></p>
     </div>
 
-    <!-- Section Application (cachée avant login) -->
+    <!-- APP -->
     <div id="appSection" class="app-section hidden">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <h2>✨ Créer un personnage</h2>
         <button onclick="handleLogout()" style="width:auto;padding:8px 16px;font-size:0.9rem;">Déconnexion</button>
       </div>
 
-      <!-- Upload zone -->
       <div class="upload-zone" id="dropZone">
         <p>📤 Glissez-déposez votre esquisse ici</p>
-        <p style="font-size:0.9rem;color:#aaa;">ou cliquez pour parcourir</p>
         <input type="file" id="fileInput" accept="image/*" style="display:none;" />
       </div>
       <div id="previewContainer" class="hidden">
@@ -192,236 +153,56 @@
         <img id="sketchPreview" style="max-width:300px;border-radius:8px;margin:10px 0;" />
       </div>
 
-      <!-- Options de génération -->
-      <h3 style="margin:25px 0 15px;">⚙️ Options de génération</h3>
+      <h3 style="margin:25px 0 15px;">⚙️ Options</h3>
       <div class="options-grid">
-        <div class="option-card selected" data-type="turnaround">
-          <strong>🔄 Turnaround</strong><br/>
-          <small>Vues face/profil/dos</small>
-        </div>
-        <div class="option-card" data-type="poses">
-          <strong>🎭 Poses</strong><br/>
-          <small>Bibliothèque d'attitudes</small>
-        </div>
-        <div class="option-card" data-type="lipsync">
-          <strong>👄 Lip-sync</strong><br/>
-          <small>Positions de lèvres</small>
-        </div>
-        <div class="option-card" data-type="expressions">
-          <strong>😊 Expressions</strong><br/>
-          <small>Émotions variées</small>
-        </div>
+        <div class="option-card selected" data-type="turnaround"><strong>🔄 Turnaround</strong><br/><small>Vues face/profil/dos</small></div>
+        <div class="option-card" data-type="poses"><strong>🎭 Poses</strong><br/><small>Attitudes</small></div>
+        <div class="option-card" data-type="lipsync"><strong>👄 Lip-sync</strong><br/><small>Lèvres</small></div>
+        <div class="option-card" data-type="expressions"><strong>😊 Expressions</strong><br/><small>Émotions</small></div>
       </div>
 
-      <button id="generateBtn" onclick="generateCharacter()" disabled>
-        🎨 Générer le personnage
-      </button>
+      <button id="generateBtn" onclick="generateCharacter()" disabled>🎨 Générer le personnage</button>
 
-      <!-- Résultats -->
       <div id="loading" class="loading hidden">
-        <p>⏳ Génération en cours... (30-60 secondes)</p>
+        <p>⏳ IA en cours... (30-60s)</p>
         <div style="width:200px;height:4px;background:#333;border-radius:2px;margin:15px auto;overflow:hidden;">
           <div id="progressBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#ff6b6b);transition:width 0.3s;"></div>
         </div>
       </div>
-
       <div id="results" class="results-grid hidden"></div>
     </div>
   </div>
 
   <script>
-    // === CONFIGURATION (À PERSONNALISER) ===
+    // === CONFIG ===
     const CONFIG = {
-      // Pour la démo : identifiants de test
       validUsers: {
+        'admin': 'admin123',
         'x_story': 'Prod2026',
         'x_charact': 'Chara@Gen01',
-        'x_layout': 'Studio#X99',
-        'admin_prod': 'master123'
-      },
-      // Clé API Replicate (à remplacer par la vôtre : https://replicate.com)
-      replicateApiKey: 'r8_YOUR_API_KEY_HERE',
-      // Modèle Stable Diffusion avec ControlNet pour sketch-to-image
-      modelEndpoint: 'https://api.replicate.com/v1/predictions'
+        'x_layout': 'Studio#X99'
+      }
     };
-
-    // === GESTION DE L'AUTHENTIFICATION ===
     let currentUser = null;
+    let uploadedImage = null;
+    let selectedType = 'turnaround';
 
+    // === AUTH ===
     function handleLogin() {
       const userId = document.getElementById('userId').value.trim();
       const userPass = document.getElementById('userPass').value;
       const errorMsg = document.getElementById('loginError');
-
       if (CONFIG.validUsers[userId] === userPass) {
         currentUser = userId;
         document.getElementById('loginSection').classList.add('hidden');
         document.getElementById('appSection').classList.remove('hidden');
         errorMsg.classList.add('hidden');
-        // Sauvegarder la session
         sessionStorage.setItem('xcreator_user', userId);
       } else {
-        errorMsg.textContent = '❌ Identifiants incorrects. Contactez votre administrateur.';
+        errorMsg.textContent = '❌ Identifiants incorrects.';
         errorMsg.classList.remove('hidden');
       }
     }
 
     function handleLogout() {
-      currentUser = null;
-      sessionStorage.removeItem('xcreator_user');
-      document.getElementById('appSection').classList.add('hidden');
-      document.getElementById('loginSection').classList.remove('hidden');
-      document.getElementById('userId').value = '';
-      document.getElementById('userPass').value = '';
-    }
-
-    // Vérifier session au chargement
-    window.addEventListener('load', () => {
-      const savedUser = sessionStorage.getItem('xcreator_user');
-      if (savedUser && CONFIG.validUsers[savedUser]) {
-        currentUser = savedUser;
-        document.getElementById('loginSection').classList.add('hidden');
-        document.getElementById('appSection').classList.remove('hidden');
-      }
-    });
-
-    // === GESTION DE L'UPLOAD ===
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const previewContainer = document.getElementById('previewContainer');
-    const sketchPreview = document.getElementById('sketchPreview');
-    const generateBtn = document.getElementById('generateBtn');
-    let uploadedImage = null;
-
-    dropZone.addEventListener('click', () => fileInput.click());
-    
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('dragover');
-    });
-    
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('dragover');
-    });
-    
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('dragover');
-      handleFile(e.dataTransfer.files[0]);
-    });
-    
-    fileInput.addEventListener('change', (e) => {
-      handleFile(e.target.files[0]);
-    });
-
-    function handleFile(file) {
-      if (!file || !file.type.startsWith('image/')) {
-        alert('Veuillez sélectionner une image valide (PNG, JPG, WebP)');
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        uploadedImage = e.target.result;
-        sketchPreview.src = uploadedImage;
-        previewContainer.classList.remove('hidden');
-        generateBtn.disabled = false;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // === OPTIONS DE GÉNÉRATION ===
-    let selectedType = 'turnaround';
-    document.querySelectorAll('.option-card').forEach(card => {
-      card.addEventListener('click', () => {
-        document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        selectedType = card.dataset.type;
-      });
-    });
-
-    // === GÉNÉRATION DU PERSONNAGE ===
-   async function generateCharacter() {
-  if (!uploadedImage) {
-    alert('Veuillez d\'abord charger une esquisse');
-    return;
-  }
-
-  const loading = document.getElementById('loading');
-  const results = document.getElementById('results');
-  const progressBar = document.getElementById('progressBar');
-  
-  loading.classList.remove('hidden');
-  results.classList.add('hidden');
-  results.innerHTML = '';
-  generateBtn.disabled = true;
-  generateBtn.textContent = '⏳ Génération IA en cours...';
-
-  let progress = 0;
-  const progressInterval = setInterval(() => {
-    progress += Math.random() * 8;
-    if (progress > 85) progress = 85;
-    progressBar.style.width = `${progress}%`;
-  }, 1500);
-
-  try {
-    const response = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sketch: uploadedImage,
-        type: selectedType,
-        userId: currentUser
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) throw new Error(data.error || 'Erreur serveur');
-
-    clearInterval(progressInterval);
-    progressBar.style.width = '100%';
-
-    if (data.urls && data.urls.length > 0) {
-      data.urls.forEach((url, index) => {
-        const labels = {
-          turnaround: ['Face', 'Profil', 'Dos', '3/4'],
-          poses: ['Pose Dynamique', 'Pose Assise', 'Action', 'Marche'],
-          lipsync: ['Phonème A', 'Phonème E', 'Phonème O', 'Phonème M'],
-          expressions: ['Joyeux', 'Triste', 'Colère', 'Surpris']
-        };
-        const labelList = labels[selectedType] || ['Génération ' + (index + 1)];
-        
-        const card = document.createElement('div');
-        card.className = 'result-card';
-        card.innerHTML = `
-          <strong>${labelList[index % labelList.length]}</strong>
-          <img src="${url}" alt="Résultat IA" />
-          <button onclick="downloadImage('${url}', 'perso_${index}.png')" 
-                  style="margin-top:10px;padding:8px;font-size:0.85rem;background:#0f3460;">
-            ⬇️ Télécharger
-          </button>
-        `;
-        results.appendChild(card);
-      });
-
-      setTimeout(() => {
-        loading.classList.add('hidden');
-        results.classList.remove('hidden');
-        generateBtn.disabled = false;
-        generateBtn.textContent = '🎨 Générer le personnage';
-      }, 600);
-    } else {
-      throw new Error('Aucune image retournée par l\'IA');
-    }
-
-  } catch (error) {
-    clearInterval(progressInterval);
-    loading.classList.add('hidden');
-    alert('❌ ' + error.message + '\n\nVérifiez que : 1) La clé API est dans Vercel 2) Le fichier api/generate.js existe');
-    generateBtn.disabled = false;
-    generateBtn.textContent = '🎨 Générer le personnage';
-  }
-}
-
-    
+      currentUser = null
