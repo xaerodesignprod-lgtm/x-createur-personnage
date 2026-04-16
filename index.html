@@ -14,105 +14,26 @@
       padding: 20px;
     }
     .container { max-width: 1200px; margin: 0 auto; }
-    header {
-      text-align: center;
-      padding: 30px 0;
-      border-bottom: 2px solid #0f3460;
-      margin-bottom: 30px;
-    }
-    h1 {
-      font-size: 2.5rem;
-      background: linear-gradient(90deg, #e94560, #ff6b6b);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 10px;
-    }
-    .login-section, .app-section {
-      background: rgba(255,255,255,0.05);
-      border-radius: 16px;
-      padding: 30px;
-      margin-bottom: 20px;
-      backdrop-filter: blur(10px);
-    }
+    header { text-align: center; padding: 30px 0; border-bottom: 2px solid #0f3460; margin-bottom: 30px; }
+    h1 { font-size: 2.5rem; background: linear-gradient(90deg, #e94560, #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+    .login-section, .app-section { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 30px; margin-bottom: 20px; backdrop-filter: blur(10px); }
     .hidden { display: none; }
     .form-group { margin: 15px 0; }
     label { display: block; margin-bottom: 8px; font-weight: 500; }
-    input {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #0f3460;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.1);
-      color: #fff;
-      font-size: 1rem;
-    }
+    input { width: 100%; padding: 12px; border: 2px solid #0f3460; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; font-size: 1rem; }
     input:focus { outline: none; border-color: #e94560; }
-    button {
-      background: linear-gradient(90deg, #e94560, #ff6b6b);
-      color: white;
-      border: none;
-      padding: 14px 28px;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s;
-      width: 100%;
-      margin-top: 10px;
-    }
+    button { background: linear-gradient(90deg, #e94560, #ff6b6b); color: white; border: none; padding: 14px 28px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s; width: 100%; margin-top: 10px; }
     button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(233,69,96,0.4); }
-    .upload-zone {
-      border: 3px dashed #0f3460;
-      border-radius: 12px;
-      padding: 40px;
-      text-align: center;
-      margin: 20px 0;
-      cursor: pointer;
-      transition: border-color 0.3s;
-    }
+    .upload-zone { border: 3px dashed #0f3460; border-radius: 12px; padding: 40px; text-align: center; margin: 20px 0; cursor: pointer; transition: border-color 0.3s; }
     .upload-zone:hover, .upload-zone.dragover { border-color: #e94560; background: rgba(233,69,96,0.1); }
-    .results-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-top: 30px;
-    }
-    .result-card {
-      background: rgba(255,255,255,0.08);
-      border-radius: 12px;
-      padding: 15px;
-      text-align: center;
-    }
-    .result-card img {
-      width: 100%;
-      border-radius: 8px;
-      margin: 10px 0;
-      max-height: 200px;
-      object-fit: contain;
-    }
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
+    .result-card { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 15px; text-align: center; }
+    .result-card img { width: 100%; border-radius: 8px; margin: 10px 0; max-height: 200px; object-fit: contain; }
     .loading { text-align: center; padding: 20px; color: #ff6b6b; }
-    .options-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin: 20px 0;
-    }
-    .option-card {
-      background: rgba(255,255,255,0.05);
-      padding: 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.3s;
-    }
+    .options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+    .option-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.3s; }
     .option-card.selected { border-color: #e94560; background: rgba(233,69,96,0.1); }
-    .error {
-      color: #ff6b6b;
-      background: rgba(255,107,107,0.1);
-      padding: 10px;
-      border-radius: 8px;
-      margin: 10px 0;
-    }
+    .error { color: #ff6b6b; background: rgba(255,107,107,0.1); padding: 10px; border-radius: 8px; margin: 10px 0; }
   </style>
 </head>
 <body>
@@ -122,7 +43,6 @@
       <p>Plateforme professionnelle pour productions d'animation</p>
     </header>
 
-    <!-- LOGIN -->
     <div id="loginSection" class="login-section">
       <h2>🔐 Accès réservé</h2>
       <div class="form-group">
@@ -137,7 +57,6 @@
       <p id="loginError" class="error hidden"></p>
     </div>
 
-    <!-- APP -->
     <div id="appSection" class="app-section hidden">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <h2>✨ Créer un personnage</h2>
@@ -174,7 +93,9 @@
   </div>
 
   <script>
-    // === CONFIG ===
+    console.log("🟢 SCRIPT CHARGÉ AVEC SUCCÈS");
+
+    // Configuration des utilisateurs
     const CONFIG = {
       validUsers: {
         'admin': 'admin123',
@@ -183,26 +104,148 @@
         'x_layout': 'Studio#X99'
       }
     };
+
     let currentUser = null;
     let uploadedImage = null;
     let selectedType = 'turnaround';
 
-    // === AUTH ===
-    function handleLogin() {
+    // Fonction de connexion (attachée à window pour éviter les erreurs de scope)
+    window.handleLogin = function() {
+      console.log("🔑 Connexion tentée...");
       const userId = document.getElementById('userId').value.trim();
       const userPass = document.getElementById('userPass').value;
       const errorMsg = document.getElementById('loginError');
+
       if (CONFIG.validUsers[userId] === userPass) {
         currentUser = userId;
         document.getElementById('loginSection').classList.add('hidden');
         document.getElementById('appSection').classList.remove('hidden');
         errorMsg.classList.add('hidden');
         sessionStorage.setItem('xcreator_user', userId);
+        console.log("✅ Connecté :", userId);
       } else {
         errorMsg.textContent = '❌ Identifiants incorrects.';
         errorMsg.classList.remove('hidden');
+        console.log("❌ Échec connexion");
       }
+    };
+
+    window.handleLogout = function() {
+      currentUser = null;
+      sessionStorage.removeItem('xcreator_user');
+      document.getElementById('appSection').classList.add('hidden');
+      document.getElementById('loginSection').classList.remove('hidden');
+      document.getElementById('userId').value = '';
+      document.getElementById('userPass').value = '';
+    };
+
+    // Vérifier session au chargement
+    window.addEventListener('load', function() {
+      const saved = sessionStorage.getItem('xcreator_user');
+      if (saved && CONFIG.validUsers[saved]) {
+        currentUser = saved;
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('appSection').classList.remove('hidden');
+      }
+    });
+
+    // Gestion de l'upload
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const sketchPreview = document.getElementById('sketchPreview');
+    const generateBtn = document.getElementById('generateBtn');
+
+    dropZone.addEventListener('click', function() { fileInput.click(); });
+    dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('dragover'); });
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', function(e) { handleFile(e.target.files[0]); });
+
+    function handleFile(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        alert('Image valide requise (PNG/JPG)');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        uploadedImage = e.target.result;
+        sketchPreview.src = uploadedImage;
+        previewContainer.classList.remove('hidden');
+        generateBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
     }
 
-    function handleLogout() {
-      currentUser = null
+    // Gestion des options
+    document.querySelectorAll('.option-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        document.querySelectorAll('.option-card').forEach(function(c) { c.classList.remove('selected'); });
+        card.classList.add('selected');
+        selectedType = card.dataset.type;
+      });
+    });
+
+    // Génération IA
+    window.generateCharacter = async function() {
+      if (!uploadedImage) return alert('Chargez une esquisse d\'abord');
+      
+      const loading = document.getElementById('loading');
+      const results = document.getElementById('results');
+      const progressBar = document.getElementById('progressBar');
+      
+      loading.classList.remove('hidden');
+      results.classList.add('hidden');
+      results.innerHTML = '';
+      generateBtn.disabled = true;
+      generateBtn.textContent = '⏳ IA en cours...';
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sketch: uploadedImage, type: selectedType, userId: currentUser })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Erreur serveur');
+
+        progressBar.style.width = '100%';
+        
+        if (data.urls && data.urls.length > 0) {
+          const labels = {
+            turnaround: ['Face','Profil','Dos','3/4'],
+            poses: ['Pose 1','Pose 2','Pose 3','Pose 4'],
+            lipsync: ['A','E','O','M'],
+            expressions: ['Joyeux','Triste','Colère','Surpris']
+          };
+          const list = labels[selectedType] || ['Résultat'];
+          
+          data.urls.forEach(function(url, i) {
+            const card = document.createElement('div');
+            card.className = 'result-card';
+            card.innerHTML = '<strong>' + (list[i] || 'Résultat') + '</strong><img src="' + url + '" alt="IA"/><a href="' + url + '" target="_blank" style="display:inline-block;margin-top:10px;color:#e94560;">🔗 Ouvrir</a>';
+            results.appendChild(card);
+          });
+          
+          loading.classList.add('hidden');
+          results.classList.remove('hidden');
+        } else {
+          throw new Error('Aucune image générée');
+        }
+      } catch (err) {
+        console.error('Erreur IA:', err);
+        alert('❌ ' + err.message + '\n\nVérifiez : 1) Clé API dans Vercel 2) Dossier api/ 3) Crédits Replicate');
+        loading.classList.add('hidden');
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = '🎨 Générer le personnage';
+      }
+    };
+  </script>
+</body>
+</html>
