@@ -1,4 +1,4 @@
-// api/generate.js - Mode "Coloriste Discipliné"
+// api/generate.js - ControlNet Scribble (Respect TOTAL du croquis)
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -18,19 +18,18 @@ export default async function handler(req, res) {
     const token = process.env.REPLICATE_API_TOKEN;
     if (!token || token.length < 10) return res.status(500).json({ error: 'Clé API manquante' });
 
-    // Modèle SD 1.5 Img2Img
-    const modelVersion = "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf";
+    // ✅ MODÈLE CONTROLNET SCRIBBLE - SPÉCIALISÉ POUR RESPECTER LES CROQUIS
+    const modelVersion = "854e8727697a057c525cdb45ab037f64ecca770a1769cc52287c2e56472a247b";
     
-    // 🎨 PROMPTS STRICTS : On demande juste de colorier, pas de réinventer
-    const baseStyles = {
-      turnaround: "clean color fill, cel shaded, animation style",
-      poses: "clean color fill, cel shaded, animation style",
-      lipsync: "clean color fill, cel shaded, animation style",
-      expressions: "clean color fill, cel shaded, animation style"
+    // Prompts simples pour la colorisation
+    const colorStyles = {
+      turnaround: "clean color fill, cel shaded, character design, white background",
+      poses: "clean color fill, cel shaded, character design, white background",
+      lipsync: "clean color fill, cel shaded, character design",
+      expressions: "clean color fill, cel shaded, character design"
     };
 
-    // Construction du prompt : minimaliste pour éviter les hallucinations
-    let promptText = baseStyles[type] || baseStyles.turnaround;
+    let promptText = colorStyles[type] || colorStyles.turnaround;
     if (customPrompt && customPrompt.trim()) {
       promptText += ", " + customPrompt;
     }
@@ -43,18 +42,14 @@ export default async function handler(req, res) {
         input: {
           image: sketch,
           prompt: promptText,
+          negative_prompt: "sketch, lineart, black and white, monochrome, unfinished",
           
-          // 🚫 INTERDICTIONS STRICTES
-          negative_prompt: "sketch, lineart, black and white, monochrome, unfinished, rough, draft, blurry, low quality, distorted, extra limbs, text, watermark, signature, realistic, 3d render, photo, different pose, different expression, change anatomy",
+          // 🎯 CONTRÔLE TOTAL :
+          // ControlNet va extraire les traits du croquis et les imposer à l'IA
+          controlnet_conditioning_scale: 1.0, // Force maximale de respect du croquis
           
-          // ⚙️ RÉGLAGE CRITIQUE :
-          // 0.25 = L'IA ne touche presque pas à la structure, elle colore juste
-          // C'est le secret pour respecter votre croquis à 100%
-          image_strength: 0.25,
-          
-          // Plus de steps pour une meilleure qualité de colorisation
-          num_inference_steps: 35,
-          guidance_scale: 5.0, // Réduit pour moins "forcer" le prompt et plus respecter l'image
+          num_inference_steps: 25,
+          guidance_scale: 7.5,
           width: 512,
           height: 512
         }
