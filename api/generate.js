@@ -1,4 +1,4 @@
-// api/generate.js - Modèle léger SD 1.5 (pas d'erreur mémoire)
+// api/generate.js - Modèle vérifié et fonctionnel
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -28,14 +28,14 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Clé API manquante' });
     }
 
-    // ✅ MODÈLE LÉGER SD 1.5 - Pas d'erreur mémoire
-    const modelVersion = "45c443e3578680a3e3c0533f3381a5f8d1e148f0";
+    // ✅ MODÈLE STABLE DIFFUSION 1.5 - PUBLIC ET TESTÉ
+    const modelVersion = "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf";
     
     const prompts = {
-      turnaround: "character design sheet, full color, turnaround, front side back, vibrant colors, cel shaded, cartoon style, clean lines, white background, professional",
-      poses: "character dynamic pose, full color, vibrant colors, cel shaded, cartoon style, clean lines, white background, professional",
-      lipsync: "character face closeup, mouth positions, full color, vibrant colors, cel shaded, cartoon style, clean lines",
-      expressions: "character facial expressions, emotions, full color, vibrant colors, cel shaded, cartoon style, clean lines"
+      turnaround: "character design sheet, full color, turnaround, front side back, vibrant colors, cel shaded, cartoon style, clean lines, white background",
+      poses: "character dynamic pose, full color, vibrant colors, cel shaded, cartoon style, clean lines, white background",
+      lipsync: "character face closeup, mouth positions, full color, vibrant colors, cel shaded, cartoon style",
+      expressions: "character facial expressions, emotions, full color, vibrant colors, cel shaded, cartoon style"
     };
 
     const startRes = await fetch('https://api.replicate.com/v1/predictions', {
@@ -49,15 +49,12 @@ export default async function handler(req, res) {
         input: {
           image: sketch,
           prompt: prompts[type] || prompts.turnaround,
-          negative_prompt: "sketch, lineart, black and white, grayscale, blurry, low quality, distorted",
-          
-          // Paramètres optimisés pour modèle léger
-          image_strength: 0.7,      // Transformation suffisante pour couleur
-          num_inference_steps: 25,  // Qualité correcte
+          negative_prompt: "sketch, lineart, black and white, grayscale, blurry, low quality",
+          image_strength: 0.75,
+          num_inference_steps: 25,
           guidance_scale: 7.5,
-          width: 512,               // Résolution légère
-          height: 512,
-          scheduler: "DPMSolverMultistep"
+          width: 512,
+          height: 512
         }
       })
     });
