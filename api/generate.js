@@ -1,4 +1,4 @@
-// api/generate.js - SDXL optimisé (Discipline type Wan) - CORRIGÉ
+// api/generate.js - Version Stable & Disciplinée (Respect du croquis)
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -18,10 +18,11 @@ export default async function handler(req, res) {
     const token = process.env.REPLICATE_API_TOKEN;
     if (!token || token.length < 10) return res.status(500).json({ error: 'Clé API manquante' });
 
-    // SDXL avec contrôle fort (proche de la discipline Wan)
-    const modelVersion = "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b";
+    // ✅ MODÈLE LÉGER ET STABLE (SD 1.5) - Plus d'erreur mémoire
+    const modelVersion = "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf";
     
-    const baseStyle = "character design, clean lineart, cel shaded, flat colors, animation style, white background, professional illustration";
+    // Style de base "Coloriste"
+    const baseStyle = "clean flat color, cel shaded, professional character design, white background";
     
     let promptText = baseStyle;
     if (customPrompt && customPrompt.trim()) {
@@ -36,16 +37,22 @@ export default async function handler(req, res) {
         input: {
           image: sketch,
           prompt: promptText,
-          negative_prompt: "sketch, rough, unfinished, monochrome, blurry, low quality, distorted, extra limbs, text, watermark, realistic, photo, 3d",
+          negative_prompt: "sketch, lineart, black and white, monochrome, unfinished, rough, draft, blurry, low quality, distorted, extra limbs, text, watermark, signature, realistic, 3d render, photo",
           
-          // RÉGLAGES "DISCIPLINE WAN"
-          image_strength: 0.35,      // Respect maximal du croquis
-          num_inference_steps: 40,   // Qualité maximale
-          guidance_scale: 2.0,       // Très bas pour obéir au croquis
-          width: 768,
-          height: 768,
-          scheduler: "DPMSolverMultistep"
-          // ✅ seed supprimé - le modèle générera un seed aléatoire automatiquement
+          // ⚙️ RÉGLAGES DE DISCIPLINE (Le secret pour respecter votre dessin)
+          
+          // 1. Strength 0.40 : L'IA change juste assez pour colorier, pas assez pour modifier la pose.
+          image_strength: 0.40, 
+          
+          // 2. Guidance 3.0 : L'IA écoute votre croquis plus que le texte.
+          // (Si on met 7.5, elle invente. À 3.0, elle colorie sagement).
+          guidance_scale: 3.0, 
+          
+          // 3. Résolution standard (évite l'erreur CUDA)
+          width: 512,
+          height: 512,
+          
+          num_inference_steps: 25
         }
       })
     });
@@ -57,7 +64,7 @@ export default async function handler(req, res) {
 
     const prediction = await startRes.json();
     let result;
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 40; i++) {
       await new Promise(r => setTimeout(r, 2000));
       const statusRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, { headers: { 'Authorization': `Token ${token.trim()}` } });
       result = await statusRes.json();
