@@ -1,4 +1,4 @@
-// api/generate.js - SDXL optimisé (Discipline type Wan)
+// api/generate.js - SDXL optimisé (Discipline type Wan) - CORRIGÉ
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -41,11 +41,11 @@ export default async function handler(req, res) {
           // RÉGLAGES "DISCIPLINE WAN"
           image_strength: 0.35,      // Respect maximal du croquis
           num_inference_steps: 40,   // Qualité maximale
-          guidance_scale: 2.0,       // Très bas pour obéir au croquis (comme Wan)
+          guidance_scale: 2.0,       // Très bas pour obéir au croquis
           width: 768,
           height: 768,
-          scheduler: "DPMSolverMultistep",
-          seed: null
+          scheduler: "DPMSolverMultistep"
+          // ✅ seed supprimé - le modèle générera un seed aléatoire automatiquement
         }
       })
     });
