@@ -1,4 +1,4 @@
-// api/generate.js - Modèle vérifié et fonctionnel
+// api/generate.js - Version "Respect du Croquis" + Prompt Utilisateur
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
 
   try {
-    const { sketch, type, userId } = req.body || {};
+    const { sketch, type, userId, customPrompt } = req.body || {};
 
     const validUsers = {
       'admin': 'admin123',
@@ -28,15 +28,24 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Clé API manquante' });
     }
 
-    // ✅ MODÈLE STABLE DIFFUSION 1.5 - PUBLIC ET TESTÉ
+    // Modèle SD 1.5 Img2Img (Stable et respecte bien la structure)
     const modelVersion = "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf";
     
-    const prompts = {
-      turnaround: "character design sheet, full color, turnaround, front side back, vibrant colors, cel shaded, cartoon style, clean lines, white background",
-      poses: "character dynamic pose, full color, vibrant colors, cel shaded, cartoon style, clean lines, white background",
-      lipsync: "character face closeup, mouth positions, full color, vibrant colors, cel shaded, cartoon style",
-      expressions: "character facial expressions, emotions, full color, vibrant colors, cel shaded, cartoon style"
+    // Instructions de base
+    const baseStyles = {
+      turnaround: "character design sheet, clean lines, white background",
+      poses: "dynamic pose, full body",
+      lipsync: "face closeup, mouth positions",
+      expressions: "facial expressions set"
     };
+
+    // Construction du prompt final : Style de base + Ce que l'utilisateur a écrit
+    let promptText = baseStyles[type] || baseStyles.turnaround;
+    if (customPrompt) {
+      promptText += ", " + customPrompt;
+    }
+
+    console.log('🚀 Prompt envoyé à l\'IA:', promptText);
 
     const startRes = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
@@ -48,9 +57,14 @@ export default async function handler(req, res) {
         version: modelVersion,
         input: {
           image: sketch,
-          prompt: prompts[type] || prompts.turnaround,
-          negative_prompt: "sketch, lineart, black and white, grayscale, blurry, low quality",
-          image_strength: 0.75,
+          prompt: promptText,
+          negative_prompt: "sketch, lineart, black and white, unfinished, blurry, ugly, distorted",
+          
+          // 🗝️ CLÉ DU SUCCÈS :
+          // 0.3 à 0.5 = L'IA garde la pose, elle colore juste.
+          // 0.7 à 0.9 = L'IA change la pose et invente.
+          image_strength: 0.45, 
+          
           num_inference_steps: 25,
           guidance_scale: 7.5,
           width: 512,
