@@ -32,8 +32,16 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         version: '7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc',
         input: { prompt: 'test sketch', width: 256, height: 256, num_inference_steps: 1 }
-      })
-    });
+      // Prompts optimisés pour un rendu "Cartoon/Animation" net et propre
+    const prompts = {
+      turnaround: "character design sheet, turnaround, front view, side view, back view, clean vector lines, cel shaded, 2d animation style, white background, high quality, sharp focus, simple background --v 2",
+      
+      poses: "character dynamic pose, full body, action stance, clean lineart, 2d cartoon style, vibrant colors, white background, sharp details --v 2",
+      
+      lipsync: "character face close-up, front view, mouth open, speaking expression, 2d animation style, clean lines, cel shaded, white background --v 2",
+      
+      expressions: "character facial expressions, happy, sad, angry, surprised, character sheet, 2d cartoon style, clean vector lines, white background --v 2"
+    };;
 
     if (!testRes.ok) {
       const errData = await testRes.json();
