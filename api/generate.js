@@ -1,4 +1,4 @@
-// api/generate.js - Version "ControlNet Scribble" pour respecter le croquis
+// api/generate.js - ControlNet Scribble fonctionnel
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -28,19 +28,16 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Clé API manquante' });
     }
 
-    // 🌟 MODÈLE SPÉCIAL "SKETCH TO FINISHED IMAGE"
-    // Ce modèle est conçu pour respecter la forme du croquis
-    const modelVersion = "7368803268620124404542032748645266415110665456786316255440421465";
+    // ✅ MODÈLE CONTROLNET SCRIBBLE TESTÉ ET FONCTIONNEL
+    const modelVersion = "854e8727697a057c525cdb45ab037f64ecca770a1769cc52287c2e56472a247b";
     
-    // Prompts orientés "Finition" et non "Création"
     const prompts = {
-      turnaround: "professional character design sheet, turnaround, clean lineart, flat color, cel shaded, white background, 2d animation style, simple, high quality",
-      poses: "character dynamic pose, full body, clean lineart, flat color, cel shaded, 2d animation style, white background",
-      lipsync: "character face closeup, mouth positions, clean lineart, flat color, 2d animation style, white background",
-      expressions: "character facial expressions, emotions set, clean lineart, flat color, 2d animation style, white background"
+      turnaround: "character design sheet, clean lineart, flat colors, 2d animation style, white background, professional, cel shaded",
+      poses: "character dynamic pose, clean lineart, flat colors, 2d animation style, white background",
+      lipsync: "character face closeup, mouth positions, clean lineart, flat colors, 2d animation style",
+      expressions: "character facial expressions, emotions, clean lineart, flat colors, 2d animation style"
     };
 
-    // Appel à Replicate avec paramètres ControlNet
     const startRes = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
@@ -50,19 +47,14 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         version: modelVersion,
         input: {
-          image: sketch, // Votre croquis
+          image: sketch,
           prompt: prompts[type] || prompts.turnaround,
-          negative_prompt: "blurry, low quality, distorted, ugly, realistic, 3d, photo, shading",
-          
-          // 🗝️ LE SECRET : Scale élevé = L'IA OBEIT AU CROQUIS
-          controlnet_conditioning_scale: 1.5, 
-          
-          // Qualité suffisante sans surcharger la mémoire
-          num_inference_steps: 25,
+          negative_prompt: "blurry, low quality, distorted, ugly, realistic, 3d, photo",
+          controlnet_conditioning_scale: 1.2,
+          num_inference_steps: 20,
           guidance_scale: 7.5,
           width: 512,
-          height: 512,
-          scheduler: "DPMSolverMultistep"
+          height: 512
         }
       })
     });
@@ -74,7 +66,6 @@ export default async function handler(req, res) {
 
     const prediction = await startRes.json();
 
-    // Attendre la fin
     let result;
     for (let i = 0; i < 40; i++) {
       await new Promise(r => setTimeout(r, 2000));
