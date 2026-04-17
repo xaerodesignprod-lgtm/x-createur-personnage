@@ -1,4 +1,4 @@
-// api/generate.js - Agent Character Designer Professionnel
+// api/generate.js - Mode "Coloriste Discipliné"
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -12,34 +12,28 @@ export default async function handler(req, res) {
   try {
     const { sketch, type, userId, customPrompt } = req.body || {};
 
-    // Vérification des utilisateurs
     const validUsers = { 'admin': 'admin123', 'x_story': 'Prod2026', 'x_charact': 'Chara@Gen01', 'x_layout': 'Studio#X99' };
     if (!validUsers[userId]) return res.status(401).json({ error: 'Accès non autorisé' });
 
     const token = process.env.REPLICATE_API_TOKEN;
     if (!token || token.length < 10) return res.status(500).json({ error: 'Clé API manquante' });
 
-    // Modèle SD 1.5 optimisé pour l'encrage et la couleur
+    // Modèle SD 1.5 Img2Img
     const modelVersion = "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf";
     
-    // 🧠 L'INTELLIGENCE DE L'AGENT
-    // 1. Le style de base imposé par l'agent (pour garantir le rendu pro)
-    const baseStyle = "professional character design, clean vector lines, cel shaded, vibrant colors, white background, high resolution, masterpiece";
-    
-    // 2. Le contexte de la pose
-    const poseContext = {
-      turnaround: "turnaround view, front side back, character sheet",
-      poses: "dynamic action pose, full body",
-      lipsync: "face closeup, mouth positions",
-      expressions: "facial expressions, emotions"
+    // 🎨 PROMPTS STRICTS : On demande juste de colorier, pas de réinventer
+    const baseStyles = {
+      turnaround: "clean color fill, cel shaded, animation style",
+      poses: "clean color fill, cel shaded, animation style",
+      lipsync: "clean color fill, cel shaded, animation style",
+      expressions: "clean color fill, cel shaded, animation style"
     };
 
-    // 3. Construction du Prompt final
-    // L'IA reçoit : (Votre demande) + (Style Pro automatique) + (Contexte de pose)
-    let finalPrompt = customPrompt ? customPrompt + ", " : "";
-    finalPrompt += baseStyle + ", " + (poseContext[type] || "");
-
-    console.log('🤖 Agent Prompt:', finalPrompt);
+    // Construction du prompt : minimaliste pour éviter les hallucinations
+    let promptText = baseStyles[type] || baseStyles.turnaround;
+    if (customPrompt && customPrompt.trim()) {
+      promptText += ", " + customPrompt;
+    }
 
     const startRes = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
@@ -47,18 +41,20 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         version: modelVersion,
         input: {
-          image: sketch, // Votre croquis
-          prompt: finalPrompt,
-          // Interdictions strictes pour l'agent
-          negative_prompt: "sketch, gray, rough, unfinished, monochrome, blurry, low quality, distorted, ugly",
+          image: sketch,
+          prompt: promptText,
           
-          // ⚙️ RÉGLAGE DE L'AGENT :
-          // 0.35 = L'IA est disciplinée. Elle garde votre structure et colorie par-dessus.
-          // Si vous trouvez que ça ne colore pas assez, on remontera à 0.40 plus tard.
-          image_strength: 0.35, 
+          // 🚫 INTERDICTIONS STRICTES
+          negative_prompt: "sketch, lineart, black and white, monochrome, unfinished, rough, draft, blurry, low quality, distorted, extra limbs, text, watermark, signature, realistic, 3d render, photo, different pose, different expression, change anatomy",
           
-          num_inference_steps: 30, // Plus de précision
-          guidance_scale: 7.5,     // Équilibre prompt/image
+          // ⚙️ RÉGLAGE CRITIQUE :
+          // 0.25 = L'IA ne touche presque pas à la structure, elle colore juste
+          // C'est le secret pour respecter votre croquis à 100%
+          image_strength: 0.25,
+          
+          // Plus de steps pour une meilleure qualité de colorisation
+          num_inference_steps: 35,
+          guidance_scale: 5.0, // Réduit pour moins "forcer" le prompt et plus respecter l'image
           width: 512,
           height: 512
         }
@@ -72,8 +68,6 @@ export default async function handler(req, res) {
 
     const prediction = await startRes.json();
     let result;
-    
-    // Attente de la génération
     for (let i = 0; i < 50; i++) {
       await new Promise(r => setTimeout(r, 2000));
       const statusRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, { headers: { 'Authorization': `Token ${token.trim()}` } });
