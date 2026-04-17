@@ -20,15 +20,15 @@
     .hidden { display: none; }
     .form-group { margin: 15px 0; }
     label { display: block; margin-bottom: 8px; font-weight: 500; }
-    input { width: 100%; padding: 12px; border: 2px solid #0f3460; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; font-size: 1rem; }
-    input:focus { outline: none; border-color: #e94560; }
+    input, textarea { width: 100%; padding: 12px; border: 2px solid #0f3460; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; font-size: 1rem; }
+    input:focus, textarea:focus { outline: none; border-color: #e94560; }
     button { background: linear-gradient(90deg, #e94560, #ff6b6b); color: white; border: none; padding: 14px 28px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s; width: 100%; margin-top: 10px; }
     button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(233,69,96,0.4); }
     .upload-zone { border: 3px dashed #0f3460; border-radius: 12px; padding: 40px; text-align: center; margin: 20px 0; cursor: pointer; transition: border-color 0.3s; }
     .upload-zone:hover, .upload-zone.dragover { border-color: #e94560; background: rgba(233,69,96,0.1); }
     .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
     .result-card { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 15px; text-align: center; }
-    .result-card img { width: 100%; border-radius: 8px; margin: 10px 0; max-height: 200px; object-fit: contain; }
+    .result-card img { width: 100%; border-radius: 8px; margin: 10px 0; max-height: 300px; object-fit: contain; }
     .loading { text-align: center; padding: 20px; color: #ff6b6b; }
     .options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
     .option-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.3s; }
@@ -73,12 +73,6 @@
       </div>
 
       <h3 style="margin:25px 0 15px;">⚙️ Options</h3>
-            <!-- Nouveau champ pour diriger l'IA -->
-      <div style="margin-bottom: 20px;">
-        <label style="display:block; margin-bottom:8px; color:#ff6b6b;">✨ Description du personnage (Optionnel)</label>
-        <textarea id="userPrompt" rows="3" placeholder="Ex: Guerrier en armure rouge, style anime, fond bleu..." 
-                  style="width:100%; padding:12px; border:2px solid #0f3460; border-radius:8px; background:rgba(255,255,255,0.1); color:#fff;"></textarea>
-      </div>
       <div class="options-grid">
         <div class="option-card selected" data-type="turnaround"><strong>🔄 Turnaround</strong><br/><small>Vues face/profil/dos</small></div>
         <div class="option-card" data-type="poses"><strong>🎭 Poses</strong><br/><small>Attitudes</small></div>
@@ -86,10 +80,16 @@
         <div class="option-card" data-type="expressions"><strong>😊 Expressions</strong><br/><small>Émotions</small></div>
       </div>
 
+      <!-- NOUVEAU CHAMP : Prompt personnalisé -->
+      <div class="form-group">
+        <label style="color:#ff6b6b;">✨ Description du style (Optionnel)</label>
+        <textarea id="userPrompt" rows="2" placeholder="Ex: Guerrier en armure rouge, style anime, fond bleu..."></textarea>
+      </div>
+
       <button id="generateBtn" onclick="generateCharacter()" disabled>🎨 Générer le personnage</button>
 
       <div id="loading" class="loading hidden">
-        <p>⏳ IA en cours... (30-60s)</p>
+        <p>⏳ IA en cours... (Respecte votre croquis)</p>
         <div style="width:200px;height:4px;background:#333;border-radius:2px;margin:15px auto;overflow:hidden;">
           <div id="progressBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e94560,#ff6b6b);transition:width 0.3s;"></div>
         </div>
@@ -115,7 +115,7 @@
     let uploadedImage = null;
     let selectedType = 'turnaround';
 
-    // Fonction de connexion (attachée à window pour éviter les erreurs de scope)
+    // Fonction de connexion
     window.handleLogin = function() {
       console.log("🔑 Connexion tentée...");
       const userId = document.getElementById('userId').value.trim();
@@ -145,7 +145,6 @@
       document.getElementById('userPass').value = '';
     };
 
-    // Vérifier session au chargement
     window.addEventListener('load', function() {
       const saved = sessionStorage.getItem('xcreator_user');
       if (saved && CONFIG.validUsers[saved]) {
@@ -214,12 +213,13 @@
         const response = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ 
-        sketch: uploadedImage, 
-        type: selectedType, 
-        userId: currentUser,
-        customPrompt: document.getElementById('userPrompt').value
-      });
+          body: JSON.stringify({ 
+            sketch: uploadedImage, 
+            type: selectedType, 
+            userId: currentUser,
+            customPrompt: document.getElementById('userPrompt').value 
+          })
+        });
         
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Erreur serveur');
@@ -249,7 +249,7 @@
         }
       } catch (err) {
         console.error('Erreur IA:', err);
-        alert('❌ ' + err.message + '\n\nVérifiez : 1) Clé API dans Vercel 2) Dossier api/ 3) Crédits Replicate');
+        alert('❌ ' + err.message + '\n\nVérifiez : 1) Clé API dans Vercel 2) Crédits Replicate');
         loading.classList.add('hidden');
       } finally {
         generateBtn.disabled = false;
