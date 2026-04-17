@@ -1,4 +1,4 @@
-// api/generate.js - Version Stable & Disciplinée (Respect du croquis)
+// api/generate.js - Assistant de Finition (Sketch Refiner)
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -18,15 +18,18 @@ export default async function handler(req, res) {
     const token = process.env.REPLICATE_API_TOKEN;
     if (!token || token.length < 10) return res.status(500).json({ error: 'Clé API manquante' });
 
-    // ✅ MODÈLE LÉGER ET STABLE (SD 1.5) - Plus d'erreur mémoire
-    const modelVersion = "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf";
+    // Modèle SDXL optimisé pour la finition de croquis (refinement)
+    const modelVersion = "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea5355255b1aa35c5565e08b";
     
-    // Style de base "Coloriste"
-    const baseStyle = "clean flat color, cel shaded, professional character design, white background";
+    // 🎨 CONSTRUCTION DU PROMPT "FINITION PRO"
+    // On ne décrit PAS la pose (elle vient du croquis)
+    // On décrit le STYLE, les MATIÈRES et la QUALITÉ du rendu
+    const styleTags = "professional character design, clean sharp lineart, cel shaded, flat colors, animation style, white background, high resolution, masterpiece";
     
-    let promptText = baseStyle;
+    let finalPrompt = styleTags;
     if (customPrompt && customPrompt.trim()) {
-      promptText += ", " + customPrompt;
+      // L'utilisateur ajoute juste les matières/couleurs (ex: "tissu rouge, bottes en cuir, cape bleue")
+      finalPrompt += ", " + customPrompt;
     }
 
     const startRes = await fetch('https://api.replicate.com/v1/predictions', {
@@ -36,23 +39,27 @@ export default async function handler(req, res) {
         version: modelVersion,
         input: {
           image: sketch,
-          prompt: promptText,
-          negative_prompt: "sketch, lineart, black and white, monochrome, unfinished, rough, draft, blurry, low quality, distorted, extra limbs, text, watermark, signature, realistic, 3d render, photo",
+          prompt: finalPrompt,
           
-          // ⚙️ RÉGLAGES DE DISCIPLINE (Le secret pour respecter votre dessin)
+          // 🚫 INTERDICTIONS STRICTES (Empêche l'IA de réinventer)
+          negative_prompt: "sketch, rough, unfinished, monochrome, blurry, low quality, distorted, extra limbs, text, watermark, signature, realistic, photo, 3d render, change pose, change expression, different anatomy, messy lines",
           
-          // 1. Strength 0.40 : L'IA change juste assez pour colorier, pas assez pour modifier la pose.
-          image_strength: 0.40, 
+          // ⚙️ RÉGLAGES CLÉS POUR LA FINITION (Le "Sweet Spot")
           
-          // 2. Guidance 3.0 : L'IA écoute votre croquis plus que le texte.
-          // (Si on met 7.5, elle invente. À 3.0, elle colorie sagement).
-          guidance_scale: 3.0, 
+          // 1. Strength 0.45 : L'IA a assez de liberté pour nettoyer les traits et poser les couleurs,
+          //    mais pas assez pour modifier la pose ou l'expression.
+          image_strength: 0.45,
           
-          // 3. Résolution standard (évite l'erreur CUDA)
-          width: 512,
-          height: 512,
+          // 2. Guidance 6.0 : Équilibre parfait. L'IA écoute le prompt pour le style/couleurs,
+          //    mais respecte l'image source pour la structure.
+          guidance_scale: 6.0,
           
-          num_inference_steps: 25
+          // 3. Steps 30 : Suffisant pour un rendu propre sans surcharge mémoire
+          num_inference_steps: 30,
+          
+          width: 768,
+          height: 768,
+          scheduler: "DPMSolverMultistep"
         }
       })
     });
@@ -64,7 +71,7 @@ export default async function handler(req, res) {
 
     const prediction = await startRes.json();
     let result;
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 50; i++) {
       await new Promise(r => setTimeout(r, 2000));
       const statusRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, { headers: { 'Authorization': `Token ${token.trim()}` } });
       result = await statusRes.json();
