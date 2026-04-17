@@ -1,4 +1,4 @@
-// api/generate.js - Modèle léger pour éviter erreur mémoire
+// api/generate.js - Version "ControlNet Scribble" pour respecter le croquis
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -28,16 +28,19 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Clé API manquante' });
     }
 
-    // Modèle SD 1.5 (beaucoup plus léger que SDXL)
-    const modelVersion = "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf";
+    // 🌟 MODÈLE SPÉCIAL "SKETCH TO FINISHED IMAGE"
+    // Ce modèle est conçu pour respecter la forme du croquis
+    const modelVersion = "7368803268620124404542032748645266415110665456786316255440421465";
     
+    // Prompts orientés "Finition" et non "Création"
     const prompts = {
-      turnaround: "character design sheet, turnaround, front view side view back view, clean lines, cartoon style, white background, simple",
-      poses: "character dynamic pose, full body, clean lines, cartoon style, white background",
-      lipsync: "character face closeup, mouth positions, clean lines, cartoon style",
-      expressions: "character facial expressions, emotions set, clean lines, cartoon style"
+      turnaround: "professional character design sheet, turnaround, clean lineart, flat color, cel shaded, white background, 2d animation style, simple, high quality",
+      poses: "character dynamic pose, full body, clean lineart, flat color, cel shaded, 2d animation style, white background",
+      lipsync: "character face closeup, mouth positions, clean lineart, flat color, 2d animation style, white background",
+      expressions: "character facial expressions, emotions set, clean lineart, flat color, 2d animation style, white background"
     };
 
+    // Appel à Replicate avec paramètres ControlNet
     const startRes = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
@@ -47,13 +50,18 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         version: modelVersion,
         input: {
-          image: sketch,
+          image: sketch, // Votre croquis
           prompt: prompts[type] || prompts.turnaround,
-          negative_prompt: "blurry, low quality, distorted, ugly, realistic, photo",
+          negative_prompt: "blurry, low quality, distorted, ugly, realistic, 3d, photo, shading",
+          
+          // 🗝️ LE SECRET : Scale élevé = L'IA OBEIT AU CROQUIS
+          controlnet_conditioning_scale: 1.5, 
+          
+          // Qualité suffisante sans surcharger la mémoire
+          num_inference_steps: 25,
+          guidance_scale: 7.5,
           width: 512,
           height: 512,
-          num_inference_steps: 20,
-          guidance_scale: 7.5,
           scheduler: "DPMSolverMultistep"
         }
       })
