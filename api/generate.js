@@ -1,12 +1,10 @@
-// api/generate.js - Version optimisée (mémoire réduite)
-export const config = {
-  runtime: 'nodejs',
-};
+// api/generate.js - Modèle léger pour éviter erreur mémoire
+export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
@@ -30,16 +28,16 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Clé API manquante' });
     }
 
-    // Prompts optimisés
-    const basePrompt = "character design sheet, clean lines, 2d cartoon style, white background, simple, clear";
+    // Modèle SD 1.5 (beaucoup plus léger que SDXL)
+    const modelVersion = "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf";
+    
     const prompts = {
-      turnaround: basePrompt + ", turnaround, front view, side view, back view",
-      poses: basePrompt + ", dynamic pose, full body",
-      lipsync: basePrompt + ", face closeup, mouth positions",
-      expressions: basePrompt + ", facial expressions, emotions"
+      turnaround: "character design sheet, turnaround, front view side view back view, clean lines, cartoon style, white background, simple",
+      poses: "character dynamic pose, full body, clean lines, cartoon style, white background",
+      lipsync: "character face closeup, mouth positions, clean lines, cartoon style",
+      expressions: "character facial expressions, emotions set, clean lines, cartoon style"
     };
 
-    // Appel à Replicate avec paramètres RÉDUITS pour éviter l'erreur mémoire
     const startRes = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
@@ -47,22 +45,23 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        version: "7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc",
+        version: modelVersion,
         input: {
           image: sketch,
           prompt: prompts[type] || prompts.turnaround,
-          negative_prompt: "blurry, low quality, distorted, ugly",
-          width: 512,          // ✅ Réduit de 768 à 512
-          height: 512,         // ✅ Réduit de 768 à 512
-          num_inference_steps: 15,  // ✅ Réduit de 25 à 15 (plus rapide)
-          guidance_scale: 7.5
+          negative_prompt: "blurry, low quality, distorted, ugly, realistic, photo",
+          width: 512,
+          height: 512,
+          num_inference_steps: 20,
+          guidance_scale: 7.5,
+          scheduler: "DPMSolverMultistep"
         }
       })
     });
 
     if (!startRes.ok) {
-      const errData = await startRes.json().catch(() => ({}));
-      return res.status(startRes.status).json({ error: `Replicate: ${errData.detail || errData.title}` });
+      const err = await startRes.json().catch(() => ({}));
+      return res.status(startRes.status).json({ error: `Replicate: ${err.detail || err.title}` });
     }
 
     const prediction = await startRes.json();
