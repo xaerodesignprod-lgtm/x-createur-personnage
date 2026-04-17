@@ -1,4 +1,4 @@
-// api/generate.js - Assistant de Finition (Sketch Refiner)
+// api/generate.js - Assistant de Finition (Modèle SD 1.5 stable)
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -18,17 +18,13 @@ export default async function handler(req, res) {
     const token = process.env.REPLICATE_API_TOKEN;
     if (!token || token.length < 10) return res.status(500).json({ error: 'Clé API manquante' });
 
-    // Modèle SDXL optimisé pour la finition de croquis (refinement)
-    const modelVersion = "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea5355255b1aa35c5565e08b";
+    // ✅ MODÈLE STABLE DIFFUSION 1.5 - TESTÉ ET FONCTIONNEL
+    const modelVersion = "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf";
     
-    // 🎨 CONSTRUCTION DU PROMPT "FINITION PRO"
-    // On ne décrit PAS la pose (elle vient du croquis)
-    // On décrit le STYLE, les MATIÈRES et la QUALITÉ du rendu
-    const styleTags = "professional character design, clean sharp lineart, cel shaded, flat colors, animation style, white background, high resolution, masterpiece";
+    const styleTags = "professional character design, clean sharp lineart, cel shaded, flat colors, animation style, white background, high resolution";
     
     let finalPrompt = styleTags;
     if (customPrompt && customPrompt.trim()) {
-      // L'utilisateur ajoute juste les matières/couleurs (ex: "tissu rouge, bottes en cuir, cape bleue")
       finalPrompt += ", " + customPrompt;
     }
 
@@ -40,26 +36,14 @@ export default async function handler(req, res) {
         input: {
           image: sketch,
           prompt: finalPrompt,
-          
-          // 🚫 INTERDICTIONS STRICTES (Empêche l'IA de réinventer)
           negative_prompt: "sketch, rough, unfinished, monochrome, blurry, low quality, distorted, extra limbs, text, watermark, signature, realistic, photo, 3d render, change pose, change expression, different anatomy, messy lines",
           
-          // ⚙️ RÉGLAGES CLÉS POUR LA FINITION (Le "Sweet Spot")
-          
-          // 1. Strength 0.45 : L'IA a assez de liberté pour nettoyer les traits et poser les couleurs,
-          //    mais pas assez pour modifier la pose ou l'expression.
-          image_strength: 0.45,
-          
-          // 2. Guidance 6.0 : Équilibre parfait. L'IA écoute le prompt pour le style/couleurs,
-          //    mais respecte l'image source pour la structure.
-          guidance_scale: 6.0,
-          
-          // 3. Steps 30 : Suffisant pour un rendu propre sans surcharge mémoire
-          num_inference_steps: 30,
-          
-          width: 768,
-          height: 768,
-          scheduler: "DPMSolverMultistep"
+          // RÉGLAGES POUR FINITION PROFESSIONNELLE
+          image_strength: 0.45,      // Équilibre parfait respect/finition
+          guidance_scale: 6.0,       // Écoute le croquis et le prompt
+          num_inference_steps: 25,   // Qualité suffisante
+          width: 512,                // Résolution légère (évite CUDA error)
+          height: 512
         }
       })
     });
@@ -71,7 +55,7 @@ export default async function handler(req, res) {
 
     const prediction = await startRes.json();
     let result;
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 40; i++) {
       await new Promise(r => setTimeout(r, 2000));
       const statusRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, { headers: { 'Authorization': `Token ${token.trim()}` } });
       result = await statusRes.json();
