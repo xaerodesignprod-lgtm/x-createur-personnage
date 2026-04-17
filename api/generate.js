@@ -1,80 +1,116 @@
-// api/generate.js - Version stable Node.js pour Vercel
-export const config = { runtime: 'nodejs' };
+// api/generate.js - Backend Vercel complet pour Replicate
+export const config = {
+  runtime: 'nodejs',
+};
 
 export default async function handler(req, res) {
+  // Gestion CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Méthode non autorisée' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
 
   try {
-    const { sketch, type, userId } = req.body || await req.json();
-    const token = process.env.REPLICATE_API_TOKEN;
+    // Récupération des données
+    const { sketch, type, userId } = req.body || {};
 
-    // 🔍 LOG SERVEUR (visible dans Vercel -> Fonctions -> Logs)
-    console.log('🔑 [SERVEUR] Token présent ?', !!token);
-    console.log('🔑 [SERVEUR] Longueur du token ?', token ? token.length : 0);
+    // Vérification utilisateur (doit correspondre au frontend)
+    const validUsers = {
+      'admin': 'admin123',
+      'x_story': 'Prod2026',
+      'x_charact': 'Chara@Gen01',
+      'x_layout': 'Studio#X99'
+    };
 
-    if (!token || token.length < 10) {
-      return res.status(500).json({ error: 'Clé API manquante ou invalide dans Vercel.' });
+    if (!validUsers[userId]) {
+      return res.status(401).json({ error: 'Accès non autorisé' });
     }
 
-    // 1. Lancer une prédiction test simple
-    const testRes = await fetch('https://api.replicate.com/v1/predictions', {
+    // Récupération et vérification de la clé API
+    const token = process.env.REPLICATE_API_TOKEN;
+    console.log('🔍 [SERVEUR] Token présent ?', !!token);
+    console.log('🔍 [SERVEUR] Longueur token ?', token ? token.length : 0);
+
+    if (!token || token.length < 10 || token.includes('YOUR_API_KEY')) {
+      console.error('❌ [SERVEUR] Token manquant ou invalide dans Vercel');
+      return res.status(500).json({ error: 'Erreur serveur : Clé API Replicate non configurée.' });
+    }
+
+    // Prompts optimisés pour un rendu cartoon/net
+    const basePrompt = "character design sheet, clean vector lines, 2d cartoon animation style, cel shaded, white background, high quality, sharp focus, professional illustration";
+    const prompts = {
+      turnaround: basePrompt + ", turnaround view, front view, side view, back view, character model sheet",
+      poses: basePrompt + ", dynamic action pose, full body, energetic stance",
+      lipsync: basePrompt + ", close up face, mouth positions for animation, phoneme expressions",
+      expressions: basePrompt + ", facial expressions set, happy sad angry surprised, character portrait"
+    };
+    const prompt = prompts[type] || prompts.turnaround;
+
+    // 1. Lancer la prédiction sur Replicate
+    console.log('🚀 [SERVEUR] Envoi à Replicate...');
+    const startRes = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token.trim()}`,
+        'Authorization': `Token ${token.trim()}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        version: '7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc',
-        input: { prompt: 'test sketch', width: 256, height: 256, num_inference_steps: 1 }
-      // Prompts optimisés pour un rendu "Cartoon/Animation" net et propre
-    const prompts = {
-      turnaround: "character design sheet, turnaround, front view, side view, back view, clean vector lines, cel shaded, 2d animation style, white background, high quality, sharp focus, simple background --v 2",
-      
-      poses: "character dynamic pose, full body, action stance, clean lineart, 2d cartoon style, vibrant colors, white background, sharp details --v 2",
-      
-      lipsync: "character face close-up, front view, mouth open, speaking expression, 2d animation style, clean lines, cel shaded, white background --v 2",
-      
-      expressions: "character facial expressions, happy, sad, angry, surprised, character sheet, 2d cartoon style, clean vector lines, white background --v 2"
-    };;
+        version: "7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc",
+        input: {
+          image: sketch,
+          prompt: prompt,
+          negative_prompt: "blurry, low quality, distorted, ugly, extra limbs, watermark, text, realistic photo",
+          width: 768,
+          height: 768,
+          num_inference_steps: 25,
+          guidance_scale: 7.5
+        }
+      })
+    });
 
-    if (!testRes.ok) {
-      const errData = await testRes.json();
-      console.error('❌ [SERVEUR] Erreur Replicate:', errData);
-      return res.status(testRes.status).json({ error: `Replicate: ${errData.detail || errData.title}` });
+    if (!startRes.ok) {
+      const errData = await startRes.json().catch(() => ({}));
+      console.error('❌ [SERVEUR] Erreur Replicate start:', startRes.status, errData);
+      return res.status(startRes.status).json({ error: `Replicate: ${errData.detail || errData.title || 'Erreur API'}` });
     }
 
-    const prediction = await testRes.json();
+    const prediction = await startRes.json();
     console.log('🎫 [SERVEUR] Prediction ID:', prediction.id);
 
-    // 2. Attendre la fin (polling)
+    // 2. Attendre la fin de la génération (polling)
     let result;
-    for (let i = 0; i < 30; i++) {
+    let attempts = 0;
+    const maxAttempts = 40; // Max ~80 secondes
+
+    while (attempts < maxAttempts) {
       await new Promise(r => setTimeout(r, 2000));
+      attempts++;
+
       const statusRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-        headers: { 'Authorization': `Bearer ${token.trim()}` }
+        headers: { 'Authorization': `Token ${token.trim()}` }
       });
+
+      if (!statusRes.ok) throw new Error(`Erreur status Replicate: ${statusRes.status}`);
+      
       result = await statusRes.json();
-      if (['succeeded', 'failed', 'canceled'].includes(result.status)) break;
+      if (result.status === 'succeeded' || result.status === 'failed' || result.status === 'canceled') break;
     }
 
     if (result.status !== 'succeeded') {
-      return res.status(500).json({ error: `Génération échouée: ${result.error || result.status}` });
+      console.error('❌ [SERVEUR] Génération échouée:', result.error || result.status);
+      return res.status(500).json({ error: `Échec: ${result.error || result.status}` });
     }
 
-    // 3. Retourner les URLs
-    res.status(200).json({ 
-      success: true, 
-      urls: Array.isArray(result.output) ? result.output : [result.output] 
-    });
+    console.log('✅ [SERVEUR] Succès ! URLs:', result.output);
+    const urls = Array.isArray(result.output) ? result.output : [result.output];
 
-  } catch (err) {
-    console.error('💥 [SERVEUR] Crash:', err);
-    res.status(500).json({ error: err.message });
+    // 3. Retourner les résultats au frontend
+    return res.status(200).json({ success: true, urls });
+
+  } catch (error) {
+    console.error('💥 [SERVEUR] Erreur critique:', error);
+    return res.status(500).json({ error: error.message || 'Erreur interne' });
   }
 }
