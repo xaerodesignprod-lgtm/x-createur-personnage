@@ -1,4 +1,4 @@
-// api/generate.js - ControlNet Scribble (Respect TOTAL du croquis)
+// api/generate.js - SDXL optimisé (Discipline type Wan)
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -18,18 +18,12 @@ export default async function handler(req, res) {
     const token = process.env.REPLICATE_API_TOKEN;
     if (!token || token.length < 10) return res.status(500).json({ error: 'Clé API manquante' });
 
-    // ✅ MODÈLE CONTROLNET SCRIBBLE - SPÉCIALISÉ POUR RESPECTER LES CROQUIS
-    const modelVersion = "854e8727697a057c525cdb45ab037f64ecca770a1769cc52287c2e56472a247b";
+    // SDXL avec contrôle fort (proche de la discipline Wan)
+    const modelVersion = "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b";
     
-    // Prompts simples pour la colorisation
-    const colorStyles = {
-      turnaround: "clean color fill, cel shaded, character design, white background",
-      poses: "clean color fill, cel shaded, character design, white background",
-      lipsync: "clean color fill, cel shaded, character design",
-      expressions: "clean color fill, cel shaded, character design"
-    };
-
-    let promptText = colorStyles[type] || colorStyles.turnaround;
+    const baseStyle = "character design, clean lineart, cel shaded, flat colors, animation style, white background, professional illustration";
+    
+    let promptText = baseStyle;
     if (customPrompt && customPrompt.trim()) {
       promptText += ", " + customPrompt;
     }
@@ -42,16 +36,16 @@ export default async function handler(req, res) {
         input: {
           image: sketch,
           prompt: promptText,
-          negative_prompt: "sketch, lineart, black and white, monochrome, unfinished",
+          negative_prompt: "sketch, rough, unfinished, monochrome, blurry, low quality, distorted, extra limbs, text, watermark, realistic, photo, 3d",
           
-          // 🎯 CONTRÔLE TOTAL :
-          // ControlNet va extraire les traits du croquis et les imposer à l'IA
-          controlnet_conditioning_scale: 1.0, // Force maximale de respect du croquis
-          
-          num_inference_steps: 25,
-          guidance_scale: 7.5,
-          width: 512,
-          height: 512
+          // RÉGLAGES "DISCIPLINE WAN"
+          image_strength: 0.35,      // Respect maximal du croquis
+          num_inference_steps: 40,   // Qualité maximale
+          guidance_scale: 2.0,       // Très bas pour obéir au croquis (comme Wan)
+          width: 768,
+          height: 768,
+          scheduler: "DPMSolverMultistep",
+          seed: null
         }
       })
     });
