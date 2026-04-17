@@ -1,86 +1,72 @@
-// api/generate.js - Backend Vercel pour génération IA via Replicate
-export const config = {
-  runtime: 'edge',
-};
+// api/generate.js - Version stable Node.js pour Vercel
+export const config = { runtime: 'nodejs' };
 
-export default async function handler(req) {
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Méthode non autorisée' }), { 
-      status: 405, headers: { 'Content-Type': 'application/json' }
-    });
+    return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
   try {
-    const { sketch, type, userId } = await req.json();
+    const { sketch, type, userId } = req.body || await req.json();
+    const token = process.env.REPLICATE_API_TOKEN;
 
-    // Vérification sécurité basique
-    const validUsers = {
-      'admin': 'admin123',
-      'prod_user_001': 'anim2026',
-      'marie_story': 'Prod2026!',
-      'lucas_anim': 'Chara@Gen01',
-      'sarah_direct': 'Studio#X99'
-    };
+    // 🔍 LOG SERVEUR (visible dans Vercel -> Fonctions -> Logs)
+    console.log('🔑 [SERVEUR] Token présent ?', !!token);
+    console.log('🔑 [SERVEUR] Longueur du token ?', token ? token.length : 0);
 
-    if (!validUsers[userId]) {
-      return new Response(JSON.stringify({ error: 'Accès non autorisé' }), { 
-        status: 401, headers: { 'Content-Type': 'application/json' }
-      });
+    if (!token || token.length < 10) {
+      return res.status(500).json({ error: 'Clé API manquante ou invalide dans Vercel.' });
     }
 
-    const token = process.env.REPLICATE_API_TOKEN;
-    if (!token) throw new Error('Clé API manquante');
-
-    // Prompts selon le type demandé
-    const prompts = {
-      turnaround: 'character sheet, turnaround view, front side back, clean lines, cartoon style, white background',
-      poses: 'character dynamic pose, action stance, clean lines, cartoon style, white background',
-      lipsync: 'character face closeup, mouth positions animation, clean lines, white background',
-      expressions: 'character facial expressions set, emotions, clean lines, cartoon style'
-    };
-
-    // Appel API Replicate
-    const res = await fetch('https://api.replicate.com/v1/predictions', {
+    // 1. Lancer une prédiction test simple
+    const testRes = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
-        'Authorization': `Token ${token}`,
+        'Authorization': `Bearer ${token.trim()}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        version: '345035d2a3d6c3c09d95f4e36b00d433e3f2a2c3f4d5e6f7', // Modèle SDXL + ControlNet Scribble
-        input: {
-          image: sketch,
-          prompt: prompts[type] || prompts.turnaround,
-          controlnet_conditioning_scale: 0.7,
-          num_inference_steps: 25
-        }
+        version: '7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc',
+        input: { prompt: 'test sketch', width: 256, height: 256, num_inference_steps: 1 }
       })
     });
 
-    if (!res.ok) throw new Error('Erreur API Replicate');
-    const prediction = await res.json();
-
-    // Attendre la fin de la génération
-    let result;
-    for (let i = 0; i < 40; i++) {
-      await new Promise(r => setTimeout(r, 2000));
-      const status = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-        headers: { 'Authorization': `Token ${token}` }
-      });
-      result = await status.json();
-      if (result.status === 'succeeded' || result.status === 'failed') break;
+    if (!testRes.ok) {
+      const errData = await testRes.json();
+      console.error('❌ [SERVEUR] Erreur Replicate:', errData);
+      return res.status(testRes.status).json({ error: `Replicate: ${errData.detail || errData.title}` });
     }
 
-    if (result.status !== 'succeeded') throw new Error('Échec génération IA');
+    const prediction = await testRes.json();
+    console.log('🎫 [SERVEUR] Prediction ID:', prediction.id);
 
-    return new Response(JSON.stringify({ 
+    // 2. Attendre la fin (polling)
+    let result;
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 2000));
+      const statusRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+        headers: { 'Authorization': `Bearer ${token.trim()}` }
+      });
+      result = await statusRes.json();
+      if (['succeeded', 'failed', 'canceled'].includes(result.status)) break;
+    }
+
+    if (result.status !== 'succeeded') {
+      return res.status(500).json({ error: `Génération échouée: ${result.error || result.status}` });
+    }
+
+    // 3. Retourner les URLs
+    res.status(200).json({ 
       success: true, 
       urls: Array.isArray(result.output) ? result.output : [result.output] 
-    }), { headers: { 'Content-Type': 'application/json' } });
+    });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { 
-      status: 500, headers: { 'Content-Type': 'application/json' }
-    });
+    console.error('💥 [SERVEUR] Crash:', err);
+    res.status(500).json({ error: err.message });
   }
 }
