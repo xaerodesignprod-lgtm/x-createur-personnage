@@ -1,4 +1,4 @@
-// api/generate.js - ControlNet Scribble fonctionnel
+// api/generate.js - Modèle img2img pour transformation croquis → couleur
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
@@ -28,14 +28,15 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Clé API manquante' });
     }
 
-    // ✅ MODÈLE CONTROLNET SCRIBBLE TESTÉ ET FONCTIONNEL
-    const modelVersion = "854e8727697a057c525cdb45ab037f64ecca770a1769cc52287c2e56472a247b";
+    // ✅ MODÈLE SDXL IMG2IMG - Parfait pour transformer croquis en couleur
+    const modelVersion = "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b";
     
+    // Prompts TRÈS insistants sur la couleur et le fini
     const prompts = {
-      turnaround: "character design sheet, clean lineart, flat colors, 2d animation style, white background, professional, cel shaded",
-      poses: "character dynamic pose, clean lineart, flat colors, 2d animation style, white background",
-      lipsync: "character face closeup, mouth positions, clean lineart, flat colors, 2d animation style",
-      expressions: "character facial expressions, emotions, clean lineart, flat colors, 2d animation style"
+      turnaround: "FULL COLOR character design sheet, turnaround view, front side back, vibrant colors, cel shaded, professional animation style, clean finished illustration, colored, not a sketch, white background",
+      poses: "FULL COLOR character, dynamic pose, vibrant colors, cel shaded, professional animation style, clean finished illustration, colored, not a sketch, white background",
+      lipsync: "FULL COLOR character face, mouth positions, vibrant colors, cel shaded, professional animation style, clean finished illustration, colored, not a sketch",
+      expressions: "FULL COLOR character faces, emotions set, vibrant colors, cel shaded, professional animation style, clean finished illustration, colored, not a sketch"
     };
 
     const startRes = await fetch('https://api.replicate.com/v1/predictions', {
@@ -49,12 +50,16 @@ export default async function handler(req, res) {
         input: {
           image: sketch,
           prompt: prompts[type] || prompts.turnaround,
-          negative_prompt: "blurry, low quality, distorted, ugly, realistic, 3d, photo",
-          controlnet_conditioning_scale: 1.2,
-          num_inference_steps: 20,
+          negative_prompt: "sketch, lineart, black and white, grayscale, unfinished, rough, draft, blurry, low quality",
+          
+          // 🎨 PARAMÈTRES CLÉS POUR LA COULEUR :
+          image_strength: 0.65,  // Force de transformation (0.5-0.75 idéal)
+          num_inference_steps: 30,
           guidance_scale: 7.5,
-          width: 512,
-          height: 512
+          width: 768,
+          height: 768,
+          scheduler: "DPMSolverMultistep",
+          seed: null  // Aléatoire pour plus de variété
         }
       })
     });
@@ -67,7 +72,7 @@ export default async function handler(req, res) {
     const prediction = await startRes.json();
 
     let result;
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 50; i++) {
       await new Promise(r => setTimeout(r, 2000));
       const statusRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
         headers: { 'Authorization': `Token ${token.trim()}` }
