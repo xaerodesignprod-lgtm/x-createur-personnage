@@ -59,7 +59,7 @@ export default async function handler(req, res) {
           width: 768,
           height: 768,
           scheduler: "DPMSolverMultistep",
-          seed: null  // Aléatoire pour plus de variété
+        // seed supprimé pour laisser l'IA choisir aléatoirement
         }
       })
     });
